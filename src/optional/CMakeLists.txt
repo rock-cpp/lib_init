@@ -5,6 +5,13 @@ optional_init(hbridge-proxies
         HBridge.hpp    
 )
 
+optional_init(camera_usb-proxies
+    SOURCES
+        UsbCameraDriver.cpp
+    HEADERS
+        UsbCameraDriver.hpp
+)
+
 optional_init(canbus-proxies 
     SOURCES
         Canbus.cpp    
