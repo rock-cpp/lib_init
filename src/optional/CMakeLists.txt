@@ -53,8 +53,10 @@ optional_init(mars-proxies
 optional_init(odometry-proxies
     SOURCES
         SkidOdometry.cpp
+        LateralOdometry.cpp
     HEADERS
         SkidOdometry.hpp
+        LateralOdometry.hpp
 )
 
 optional_init(velodyne_lidar-proxies
