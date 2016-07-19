@@ -33,17 +33,17 @@ bool WholeBodyControl::connect()
 {
     waypointProvTask.getConcreteProxy()->current_target.connectTo(jointPosCtrlTask.getConcreteProxy()->setpoint);
     
-//     wbcTask.getConcreteProxy()->ctrl_out.connectTo(kccdCtrlTask.getConcreteProxy()->command);3
-    TrajectoryGenerationVelocity *traj = (TrajectoryGenerationVelocity*) &trajCtrl;
-    wbcTask.getConcreteProxy()->ctrl_out.connectTo(traj->getVelocityTargetPort());
-//     kccdCheckTask.getConcreteProxy()->collision_info.connectTo(kccdCtrlTask.getConcreteProxy()->collision_info);
+    wbcTask.getConcreteProxy()->ctrl_out.connectTo(kccdCtrlTask.getConcreteProxy()->command);
+//     TrajectoryGenerationVelocity *traj = (TrajectoryGenerationVelocity*) &trajCtrl;
+//     wbcTask.getConcreteProxy()->ctrl_out.connectTo(traj->getVelocityTargetPort());
+    kccdCheckTask.getConcreteProxy()->collision_info.connectTo(kccdCtrlTask.getConcreteProxy()->collision_info);
     trajCtrl.getJointStatusPort().connectTo(kccdCtrlTask.getConcreteProxy()->joint_state);
 
     
     trajCtrl.getJointStatusPort().connectTo(jointPosCtrlTask.getConcreteProxy()->feedback);
     trajCtrl.getJointStatusPort().connectTo(wbcTask.getConcreteProxy()->joint_state);
     trajCtrl.getJointStatusPort().connectTo(waypointProvTask.getConcreteProxy()->current_position);
-//     trajCtrl.getJointStatusPort().connectTo(kccdCheckTask.getConcreteProxy()->joint_state);
+    trajCtrl.getJointStatusPort().connectTo(kccdCheckTask.getConcreteProxy()->joint_state);
     
     return true;
 }
@@ -62,7 +62,7 @@ bool WholeBodyControl::configure()
     RTT::base::PortInterface *ref_cart_pos_ctrl = wbcTask.getConcreteProxy()->getPort("ref_cart_pos_ctrl");
     RTT::base::PortInterface *activation_cart_pos_ctrl = wbcTask.getConcreteProxy()->getPort("activation_cart_pos_ctrl");
     RTT::base::PortInterface *pose_cart_pos_ctrl = wbcTask.getConcreteProxy()->getPort("pose_cart_pos_ctrl");
-    RTT::base::PortInterface *joint_state_collision = wbcTask.getConcreteProxy()->getPort("joint_state_collision");
+    RTT::base::PortInterface *joint_state_collision = wbcTask.getConcreteProxy()->getPort("joint_state_joint_pos_ctrl");
   
     if(!ref_joint_pos_ctrl)
         throw std::runtime_error("WholeBodyControl:: Error, wbc has no port ref_joint_pos_ctrl. Needs to be configured");
@@ -70,8 +70,8 @@ bool WholeBodyControl::configure()
         throw std::runtime_error("WholeBodyControl:: Error, wbc has no port ref_cart_pos_ctrl. Needs to be configured");
     if(!pose_cart_pos_ctrl)
         throw std::runtime_error("WholeBodyControl:: Error, wbc has no port pose_cart_pos_ctrl. Needs to be configured");
-//     if(!joint_state_collision)
-//         throw std::runtime_error("WholeBodyControl:: Error, wbc has no port joint_state_collision. Needs to be configured");
+    if(!joint_state_collision)
+        throw std::runtime_error("WholeBodyControl:: Error, wbc has no port joint_state_collision. Needs to be configured");
     
     jointPosCtrlTask.getConcreteProxy()->control_output.getPortInterface()->connectTo(ref_joint_pos_ctrl);
 //     jointPosCtrlTask.getConcreteProxy()->activation.getPortInterface()->connectTo(activation_joint_pos_ctrl);
@@ -79,12 +79,9 @@ bool WholeBodyControl::configure()
 //     cartPosCtrlTask.getConcreteProxy()->activation.getPortInterface()->connectTo(activation_cart_pos_ctrl);
     
     pose_cart_pos_ctrl->connectTo(cartPosCtrlTask.getConcreteProxy()->feedback.getPortInterface());
-       
-//     joint_state_collision->connectTo(kccdCheckTask.getConcreteProxy()->joint_state.getPortInterface());
-    
-    
-    
-    
+
+    joint_state_collision->connectTo(kccdCheckTask.getConcreteProxy()->joint_state.getPortInterface());
+
     return ret;
 }
 
