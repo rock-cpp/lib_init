@@ -2,54 +2,81 @@ lib_init
 =============
 Task startup system
 
-
-
-License
--------
-dummy-license
-
-Installation
+description
 ------------
-The easiest way to build and install this package is to use Rock's build system.
-See [this page](http://rock-robotics.org/stable/documentation/installation.html)
-on how to install Rock.
+The __lib_init__ contains the __orocos_cpp__-based startup system for oroGen tasks. All task dependencies and port connections for a specific oroGen component, hereafter referred to as __dependent task__, can be defined in a special class. During the initialization all dependencies are resolved and the startup of uninitialized tasks is performed. The recursive startup procedure is seperated in the following steps:
+1. Resolve all dependencies (tasks) for the current (dependend) task. If a dependency is found that has not been started yet, perform a recursive startup for this task (start with step 1).
+2. Initialize the __RTT::corba::TaskContextProxy__.
+3. Connect all ports of the dependend task.
+4. Apply all configs.
+5. Setup the transformer.
+6. Configure the dependend task.
+7. Start the task.
 
-However, if you feel that it's too heavy for your needs, Rock aims at having
-most of its "library" packages (such as this one) to follow best practices. See
-[this page](http://rock-robotics.org/stable/documentation/packages/outside_of_rock.html)
-for installation instructions outside of Rock.
+usage
+-----
+To integrate a task in the startup system a class is necassary that is derived from __init::Base__ (or subclasses). The default approach is to define the associated task as __init::DependentTask__ and the dependencies as references to other __init::Base__ classes in the member list. The dependencies are passed as __Init::Base__ subclass references to the constructor:
+```
+class TrajectoryFollower : public Base {
+protected:
+    PositionProvider &posProv;
+    MotionControl2D &motionController;
+public:
+    DependentTask< trajectory_follower::proxies::Task > trajectoryFollowerTask;
+    TrajectoryFollower(PositionProvider &posProv,  MotionControl2D &motionController, const std::string &trajectoryFollowerTaskName);
+...
+```
+All dependencies are registered via __registerDependency()__. In the example above it is necessary to register the two members, __posProv__ and __motionController__, so they are considered at the recursive startup. The __init::Base__ class contains virtual methods that can be overwritten:
+- __initProxies()__: Initializes the __RTT::corba::TaskContextProxy__ for the depended tasks. In general it is not necessary to overwrite this method. In the default case __initProxies()__ method of __init::Base__ is called and takes care of the proxy initialization for all depended tasks.
+- __connect()__: All port connections can be defined in this method. An example is: 
+  ```
+  posProv.getPositionSamples().connectTo(trajectoryFollowerTask.getConcreteProxy()->robot_pose);
+  ```
+  The tasks ports can be accessed by the __RTT::corba::TaskContextProxy__. Here they are defined as __InputProxyPort<type>__/__OutputProxyPort<type>__. Instances of __OutputProxyPort<type>__ provide the __connectTo()__ method, that is used to setup the port connection between output and input ports of the same type.
+- __applyConfig(orocos_cpp::ConfigurationHelper &confHelper)__: Configures all dependend tasks. In general you do not need to overwrite this method. It is allready defined in __init::Base__.
+- __setupTransformer(orocos_cpp::TransformerHelper &trHelper)__: Sets up the tansformer for all dependend tasks. The necessary code is located in the base class method.
+- __configure()__: Configures the dependent task.
+- __start()__: Starts the dependent task.
 
-Rock CMake Macros
------------------
+As mentioned before the task(s), that lay(s) behind the __init::Base__ subclasses, are defined as __init::DependentTask__. This class creates the corresponding __RTT::corba::TaskContextProxy__. The important methods are:
+- __getProxy()__/__getConcreteProxy()__: Returns a pointer to the __RTT::corba::TaskContextProxy__.
+- __setName()__/__getName()__: Setter/Getter for the task name.
+- __setDeployment()__/__getDeployment()__: Setter/Getter for the tasks deployment. In the default case each task is spawned in its own deployment. The default name is "orogen_default_[namespace]__[task_name]".
+- __setConfig()__: Sets the config that is used for the configuration of corresponding task. The config is passed as string (as the defined in the .yml config file section). The default value for the internal config is "default".
 
-This package uses a set of CMake helper shipped as the Rock CMake macros.
-Documentations is available on [this page](http://rock-robotics.org/stable/documentation/packages/cmake_macros.html).
+As template parameter the __TaskInitializer__ (a subclass __RTT::corba::TaskContextProxy__) is passed (in the previous example the __trajectory_follower::proxies::Task__). These C++ task proxies are generated by the __orogen_cpp_proxies__ library (an oroGen plugin) during the installation (located in __install/include/orocos/[task_name]/proxies__). A list of all available proxies can be generated by using the command __pkg-config --list-all | grep proxies__.
 
-Rock Standard Layout
---------------------
-
-This directory structure follows some simple rules, to allow for generic build
-processes and simplify reuse of this project. Following these rules ensures that
-the Rock CMake macros automatically handle the project's build process and
-install setup properly.
-
-STRUCTURE
--- src/ 
-	Contains all header (*.h/*.hpp) and source files
--- build/
-	The target directory for the build process, temporary content
--- bindings/
-	Language bindings for this package, e.g. put into subfolders such as
-   |-- ruby/ 
-        Ruby language bindings
--- viz/
-        Source files for a vizkit plugin / widget related to this library 
--- resources/
-	General resources such as images that are needed by the program
--- configuration/
-	Configuration files for running the program
--- external/
-	When including software that needs a non standard installation process, or one that can be
-	easily embedded include the external software directly here
--- doc/
-	should contain the existing doxygen file: doxygen.conf
+executables
+-----------
+The __lib_init__ library is used in the __entern/taskmanagement__, a library that is used to build executables to control a robotic system. The following code examples are taken from the taskmanagement of the crex system:
+- Define/create a deployment:
+  ```
+  std::shared_ptr<orocos_cpp::Deployment> crexBaseDeployment;
+  crexBaseDeployment = std::make_shared<orocos_cpp::Deployment>("crex_base");
+  ```
+- Define/create the task initialization:
+  ```
+  std::shared_ptr<init::TrajectoryGeneration> interpolator;
+  interpolator = std::make_shared<init::TrajectoryGeneration>(*jointDispatcher, "interpolator");
+  // set config
+  interpolator->trajCtrlTask.setConfig("crex");
+  // set deployment
+  interpolator->trajCtrlTask.setDeployment(to_boost_ptr(baseDeployment));
+  ```
+  The __init::TrajectoryGeneration__ class is a subclass of the previous described __init::Base__ class.
+- Create a __StartCommon__ instance:
+  ```
+  StartCommon startCommon(argc, argv);
+  ```
+  The __StartCommon__ class is defined in __src/CommonStart.hpp__. The constructor takes the parameters that are passed to the executable (via command line). This class provides the __runCommon()__ method. It creates the __init::Init__ instance, a subclass of __state_machine::State__. The taskmanagement uses the __state_machine__ library to realize states. It switches between different states based on the states transitions. The __init::Init__ state is responsible for the recursive startup of all necessary deployments and tasks.
+- Run the startup:
+  ```
+  startCommon.run<CrexStartup>(&robot, [&] (CrexStartup &start, std::vector<init::Base *> &toInit) {
+      toInit = std::vector<init::Base *>({
+          start.motionController.get()
+      });
+        
+      // return state to execute
+  ...
+  ```
+  The __StartCommon__ class provides the __run()__ method. It takes a vector of all tasks to initialize and executes the previous described __runCommon()__ method that executes the __init::Init__ state. The __CrexStartup__ class is passed as template parameter, a special class that defines all the __init::Base__ classes in its member list. In this special case the __motionController__ is defined as shared pointer in the __CrexStartup__ class. So this executables starts the corresponding task as defined in the __init::Base__ class and its dependencies.
