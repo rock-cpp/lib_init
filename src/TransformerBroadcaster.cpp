@@ -1,10 +1,11 @@
 #include "TransformerBroadcaster.hpp"
+#include <transformer/proxies/Task.hpp>
 
 namespace init {
 TransformerBroadcaster::TransformerBroadcaster(const std::string &taskName, const smurf::Robot &robot): 
     Base("TransformerBroadcaster"),
     robot(robot),
-    broadcaster(this, taskName)
+    broadcaster(this, taskName, new DependentTaskPimplImpl<transformer::proxies::Task>())
 {
 
 }
