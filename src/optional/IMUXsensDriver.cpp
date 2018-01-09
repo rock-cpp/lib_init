@@ -6,6 +6,16 @@ init::IMUXsensDriver::IMUXsensDriver(const std::string imuTaskName) : Base("IMUX
 {
 }
 
+bool init::IMUXsensDriver::start()
+{
+    if(!init::Base::start())
+        return false;
+    
+    std::cout << getName() << ": Estimating IMU bias for 3 seconds" << std::endl;
+    return estimate_bias(3);
+}
+
+
 OutputProxyPort< base::samples::RigidBodyState > init::IMUXsensDriver::getOrientationSamples()
 {
     return imuTask.getConcreteProxy()->orientation_samples;

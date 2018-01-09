@@ -15,6 +15,7 @@ class IMUXsensDriver : public IMUDriver
         virtual OutputProxyPort< base::samples::IMUSensors > getSensorSamples();
         bool estimate_bias(uint16_t seconds);
 
+        virtual bool start();
         DependentTask<imu_xsens::proxies::Task> imuTask;
 };
 
