@@ -1,6 +1,4 @@
 #include "TrajectoryFollower.hpp"
-#include <lib_init/SkidOdometry.hpp>
-#include <lib_init/MotionControl2D.hpp>
 
 namespace log_replay
 {
