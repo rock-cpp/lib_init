@@ -25,7 +25,7 @@ bool InitHelper::start(init::Base& toStart)
 
     orocos_cpp::Spawner &spawner(orocos_cpp::Spawner::getInstace());
 
-    spawner.waitUntilAllReady(base::Time::fromSeconds(5.0));
+    spawner.waitUntilAllReady(base::Time::fromSeconds(25.0));
 
     std::vector<init::Base *> started;
 
