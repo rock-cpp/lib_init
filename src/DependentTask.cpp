@@ -62,7 +62,7 @@ void DependentTaskBase::setPrefix(const std::string& newPrefix)
     config.push_back(prefix);
 }
 
-void DependentTaskBase::setDeployment(const boost::shared_ptr< orocos_cpp::Deployment >& newDeployment)
+void DependentTaskBase::setDeployment(const std::shared_ptr< orocos_cpp::Deployment >& newDeployment)
 {
     if(!prefix.empty())
         throw std::runtime_error("init::DependentTaskBase::setDeployment: error, setting deployment, after setting of prefix is not allowed");

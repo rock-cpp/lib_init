@@ -2,7 +2,7 @@
 
 #include <string>
 #include <vector>
-#include <boost/shared_ptr.hpp>
+#include <memory>
 
 namespace RTT {
     namespace corba {
@@ -24,7 +24,7 @@ protected:
     std::string taskName;
     std::string taskModel;
     std::string prefix;
-    boost::shared_ptr<orocos_cpp::Deployment> deployment;
+    std::shared_ptr<orocos_cpp::Deployment> deployment;
     std::vector<std::string> config;
 
     RTT::corba::TaskContextProxy *proxy;
@@ -52,9 +52,9 @@ public:
 
     void setName(const std::string &newName);
     
-    void setDeployment(const boost::shared_ptr<orocos_cpp::Deployment> &newDeployment);
+    void setDeployment(const std::shared_ptr<orocos_cpp::Deployment> &newDeployment);
 
-    const boost::shared_ptr<orocos_cpp::Deployment> &getDeployment() const
+    const std::shared_ptr<orocos_cpp::Deployment> &getDeployment() const
     {
         return deployment;
     }
