@@ -32,7 +32,12 @@ void Init::executeFunction()
     
     helper.printDependencies(*toStart, 0);
     
-    helper.start(*toStart);
+    if(!helper.start(*toStart))
+    {
+        fail();
+        std::cout << "Init Failed" << std::endl;
+        return;
+    }
     
     std::cout << "Init Done" << std::endl;
     

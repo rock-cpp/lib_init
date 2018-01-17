@@ -29,7 +29,8 @@ bool InitHelper::start(init::Base& toStart)
 
     std::vector<init::Base *> started;
 
-    startTasksRecursive(toStart, started);
+    if(!startTasksRecursive(toStart, started))
+        return false;
 
     if(loggingActive)
     {
@@ -183,16 +184,38 @@ bool InitHelper::startTasksRecursive(init::Base& toStart, std::vector< init::Bas
         if(allreadyStarted)
             continue;
 
-        startTasksRecursive(*dep, started);
+        if(!startTasksRecursive(*dep, started))
+            return false;
     }
 
     toStart.initProxies();
-    toStart.connect();
-    toStart.applyConfig(confHelper);
-    toStart.setupTransformer(trHelper);
-    toStart.configure();
-    toStart.start();
-
+    
+    if(!toStart.connect())
+    {
+        std::cout << "InitHelper::startReplayRecursive : Failed to connect  " << toStart.getName() << std::endl;
+        return false;
+    }
+    if(!toStart.applyConfig(confHelper))
+    {
+        std::cout << "InitHelper::startReplayRecursive : Failed to configure  " << toStart.getName() << std::endl;
+        return false;
+    }
+    if(!toStart.setupTransformer(trHelper))
+    {
+        std::cout << "InitHelper::startReplayRecursive : Failed to setup transformer for " << toStart.getName() << std::endl;
+        return false;
+    }
+    if(!toStart.configure())
+    {
+        std::cout << "InitHelper::startReplayRecursive : Failed to configure " << toStart.getName() << std::endl;
+        return false;
+    }
+    if(!toStart.start())
+    {
+        std::cout << "InitHelper::startReplayRecursive : Failed to start " << toStart.getName() << std::endl;
+        return false;
+    }
+ 
     started.push_back(&toStart);
 
     return true;
