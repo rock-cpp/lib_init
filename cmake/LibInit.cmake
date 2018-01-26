@@ -65,7 +65,7 @@ macro(init_module)
     
     add_library(${LIB_NAME} SHARED ${${LIB_NAME}_SOURCES})
     
-    if(${PROJECT_NAME}-proxies)
+    if(TARGET ${PROJECT_NAME}-proxies)
         target_link_libraries(${LIB_NAME} ${PROJECT_NAME}-proxies)
         SET(LOCAL_PROXY_LIB ${PROJECT_NAME}-proxies)
     endif()
@@ -127,12 +127,12 @@ macro(replay_module)
     
     add_library(${LIB_NAME} SHARED ${${LIB_NAME}_SOURCES})
     
-    if(${PROJECT_NAME}-proxies)
+    if(TARGET ${PROXYLIB_NAME})
         target_link_libraries(${LIB_NAME} ${PROJECT_NAME}-proxies)
         SET(LOCAL_PROXY_LIB ${PROJECT_NAME}-proxies)
     endif()
 
-    if(${PROJECT_NAME}-init)
+    if(TARGET ${PROJECT_NAME}-init)
         target_link_libraries(${LIB_NAME} ${PROJECT_NAME}-init)
         SET(LOCAL_INIT_LIB ${PROJECT_NAME}-init)
     endif()
