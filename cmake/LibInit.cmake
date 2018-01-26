@@ -1,5 +1,8 @@
 
 macro(init_gen_pkgconfig)
+    #we need to convert the list to a space seperated string
+    STRING(REPLACE ";" " " PKG_DEPS "${${LIB_NAME}_DEPS_PKGCONFIG}")
+
     SET(infile "prefix=${CMAKE_INSTALL_PREFIX}
 exec_prefix=${CMAKE_INSTALL_PREFIX}
 libdir=\${prefix}/lib/orocos
@@ -8,9 +11,11 @@ includedir=\${prefix}/include
 Name: ${LIB_NAME}
 Description: Init module for ${LIB_NAME}
 Version: ${PROJECT_VERSION}
-Requires: ${${LIB_NAME}_DEPS_PKGCONFIG} ${LOCAL_PROXY_LIB} ${LOCAL_INIT_LIB}
+Requires: ${PKG_DEPS} ${LOCAL_PROXY_LIB} ${LOCAL_INIT_LIB}
 Libs: -L\${libdir} -l${LIB_NAME}
 Cflags: -I\${includedir}")
+
+#     message("PKGConfig is ${infile}")
 
     file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${LIB_NAME}.pc ${infile})
     install(
