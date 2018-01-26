@@ -6,3 +6,8 @@ rock_find_qt4()
 rock_init(lib_init 0.1)
 rock_standard_layout()
 
+install(
+    FILES
+        cmake/LibInit.cmake
+        cmake/LibInitConfig.cmake
+    DESTINATION share/LibInit/cmake)
